@@ -1,4 +1,5 @@
-export enum NoteEnum {
+export enum NoteEnum
+{
   C = 1,
   C_SHARP = 2,
   D = 3,
