@@ -1,4 +1,4 @@
-import { ExtendedArray } from './extendedArray'
+import {ExtendedArray} from "../collection/extendedArray";
 
 export class EnumUtil
 {

@@ -1,37 +1,89 @@
-import { ExtendedArray } from './utils/extendedArray'
-import { EnumUtil } from './utils/enumUtil'
-import { NoteEnum } from './enums/noteEnum'
+import {NoteEnum}       from './enums/noteEnum';
+import {AlterationEnum} from './enums/alterationEnum';
+import {Common}         from './utils/common';
+import {EnumUtil}       from './utils/enumUtil';
 
 export class Note
 {
-  public static getNotes(parameters:
+  public get note() : NoteEnum
   {
-    shift: NoteEnum
-    includeAlteration: boolean
-  }): ExtendedArray<NoteEnum>
+    return this._note;
+  }
+
+  private _note: NoteEnum = NoteEnum.C;
+
+  get octave(): number
+  {
+    return this._octave;
+  }
+
+  set octave(value: number)
+  {
+    this._octave = Common.normalizeOctave(value);
+  }
+
+  private _octave: number = 1;
+
+  public constructor(parameters: { note: NoteEnum, alteration?: AlterationEnum, octave?: number })
   {
     let defaultParameters = {
-      shift: NoteEnum.C,
-      includeAlteration: false
+      note: NoteEnum.C,
+      alteration: null,
+      octave: 1
     };
 
-    let { shift, includeAlteration } = Object.assign({}, defaultParameters, parameters);
-    let notes: ExtendedArray<NoteEnum> = EnumUtil.toExtendedArray(NoteEnum);
+    let {note, alteration, octave} = Object.assign({}, defaultParameters, parameters);
+    this._note = alteration ? this.alter(alteration).note : note;
+    this._octave = octave;
+  }
 
-    if (!includeAlteration)
+  public alter(alteration: AlterationEnum) : Note
+  {
+    if(!EnumUtil.isInRange(AlterationEnum, alteration))
     {
-      let alteredNotes: ExtendedArray<NoteEnum> = new ExtendedArray<NoteEnum>();
-      alteredNotes.push(NoteEnum.C_SHARP);
-      alteredNotes.push(NoteEnum.D_SHARP);
-      alteredNotes.push(NoteEnum.F_SHARP);
-      alteredNotes.push(NoteEnum.G_SHARP);
-      alteredNotes.push(NoteEnum.A_SHARP);
-
-      notes.removes(alteredNotes)
+      throw new Error('Invalid value');
     }
 
-    notes.shiftUntilValue(shift);
+    this._note += alteration;
 
-    return notes
+    if(this._note > NoteEnum.B)
+    {
+      this._note = NoteEnum.C;
+      this._octave++;
+    }
+    else if(this._note < NoteEnum.C)
+    {
+      this._note = NoteEnum.B;
+      this._octave--;
+    }
+
+    return this;
+  }
+
+  public transpose(semitones: number) : Note
+  {
+    semitones = Common.normalizeSemitone(semitones);
+
+    let direction: AlterationEnum;
+
+    if(semitones > 0)
+    {
+      direction = AlterationEnum.SHARP
+    }
+    else if(semitones < 0)
+    {
+      direction = AlterationEnum.FLAT
+    }
+    else
+    {
+      throw new Error('Invalid value');
+    }
+
+    for(let i = 0; i < Math.abs(semitones); i++)
+    {
+      this.alter(direction);
+    }
+
+    return this;
   }
 }
